@@ -1,25 +1,68 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
+import axios from "axios";
+import Add from "./Components/Contactbook/Add";
+import List from "./Components/Contactbook/List";
+import Edit from "./Components/Contactbook/Edit";
 
-function App() {
+const App = () => {
+  const API = "http://localhost:8000/contacts";
+
+  const [contacts, setContacts] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [contactToEdit, setContactToEdit] = useState(null);
+
+  const addContact = async (newContact) => {
+    await axios.post(API, newContact);
+    getContact();
+  };
+
+  const getContact = async () => {
+    const response = await axios(API);
+    setContacts(response.data);
+  };
+
+  const delContact = async (id) => {
+    await axios.delete(`${API}/${id}`);
+    getContact();
+  };
+
+  const getContactToEdit = async (id) => {
+    const response = await axios(`${API}/${id}`);
+    setContactToEdit(response.data);
+    setIsModalOpen(true);
+  };
+
+  const saveContact = async (editedContact) => {
+    await axios.put(`${API}/${editedContact.id}`, editedContact);
+    setIsModalOpen(false);
+    getContact();
+    setContactToEdit(null);
+  };
+
+  useEffect(() => {
+    getContact();
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <Add addContact={addContact} />
+      <List
+        contacts={contacts}
+        delContact={delContact}
+        getContactToEdit={getContactToEdit}
+      />
+      {contactToEdit ? (
+        <Edit
+          isModalOpen={isModalOpen}
+          setIsModalOpen={setIsModalOpen}
+          contactToEdit={contactToEdit}
+          saveContact={saveContact}
+          setContactToEdit={setContactToEdit}
+        />
+      ) : null}
     </div>
   );
-}
+};
 
 export default App;
